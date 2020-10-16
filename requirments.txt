@@ -1,0 +1,14 @@
+wikipedia
+kanboard
+requests
+mcpi
+wheel
+PyDictionary
+urbandict
+discord.py
+sqlalchemy
+pg8000
+twitchio
+aiohttp
+dice
+
