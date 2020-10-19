@@ -1,1 +1,1 @@
-docker run -ti --rm nurdbot
+docker run nurdbot

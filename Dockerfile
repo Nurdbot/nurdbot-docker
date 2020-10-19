@@ -1,11 +1,11 @@
-FROM python:3.8
+FROM python:3.8-buster
 
 ENV APP_HOME / app
 WORKDIR $APP_HOME
 COPY . ./
 
-RUN pip install -r requirments.txt
+RUN pip3 install -r requirments.txt
 
 
-CMD exec python twitch.py
 
+CMD [ "python3","-u", "twitch.py" ]

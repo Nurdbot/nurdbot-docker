@@ -4,13 +4,10 @@ import sqlalchemy as sa
 from config import *
 
 Base = declarative_base()
-engine = sa.create_engine(f'postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}',pool_size=1, max_overflow =0)
+engine = sa.create_engine(f'postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}')
 
 Base.metadata.bind = engine
 session = orm.scoped_session(orm.sessionmaker())(bind=engine)
-
-
-
 
 class User(Base):
     __tablename__ = 'user'

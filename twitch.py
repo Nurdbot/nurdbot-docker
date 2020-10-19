@@ -11,9 +11,8 @@ from models import *
 
 kb = kanboard.Client('http://localhost:8082/jsonrpc.php', 'jsonrpc', KANBOARD_API)
 project_id = 1
-DEBUG = True
 aio_session = aiohttp.ClientSession()
-creator_id = os.environ.get('creator_id', 'ID_FAIL')
+creator_db_id= int(os.environ.get('creator_id', '696969'))
 channel_name = os.environ.get('twitch_username', 'USERNAMEFAIL')
 #terminal color output.
 class Color:
@@ -35,13 +34,13 @@ bot = commands.Bot(
 def log_message(username, message):
     now = datetime.now()
     stamp = now.strftime("%m/%d/%Y %H:%M:%S")
-    log = TwitchLog(event_time = stamp, username = username, message = message, creator_id = creator_id)
+    log = TwitchLog(event_time = stamp, username = username, message = message, creator_id = creator_db_id)
     session.add(log)
     session.commit()
 
 def get_commands_list():
     commands_list =[]
-    commands_entries = session.query(Command).filter_by(channel_id = creator_id).all()
+    commands_entries = session.query(Command).filter_by(channel_id = creator_db_id).all()
     for command in commands_entries:
         commands_list.append(command.keyword)
 
@@ -53,20 +52,20 @@ def insert_response(command_id, response):
     session.commit()
 
 def insert_command(keyword, response):
-    new_command = Command(keyword = keyword, channel_id = creator_id)
+    new_command = Command(keyword = keyword, channel_id = creator_db_id)
     session.add(new_command)
     session.commit()
     insert_response(new_command.id, response)
 
 def get_command_id(keyword):
-    command = session.query(Command).filter_by(keyword = keyword, channel_id = creator_id).first()
+    command = session.query(Command).filter_by(keyword = keyword, channel_id = creator_db_id).first()
     if command:
         return command.id
     else:
         return False
 
 def edit_command(keyword, new_response):
-    command = session.query(Command).filter_by(keyword = keyword, channel_id = creator_id).first()
+    command = session.query(Command).filter_by(keyword = keyword, channel_id = creator_db_id).first()
     if command:
         response = session.query(Response).filter_by(command_id = command.id).first()
         response.output = new_response
@@ -75,7 +74,7 @@ def edit_command(keyword, new_response):
 #exists checkers
 def is_operator(username):
     existing_user = session.query(User).filter_by(twitch_username = username).first()
-    operator_state = session.query(Configurable).filter_by(creator_id = creator_id, alias ='operator_state').first()
+    operator_state = session.query(Configurable).filter_by(creator_id = creator_db_id, alias ='operator_state').first()
     ops =[]
     ops.extend(admins)
     
@@ -88,7 +87,7 @@ def is_operator(username):
         ops.extend(data['chatters']['moderators'])
 
     if existing_user:
-        existing_operator = session.query(Operator).filter_by(user_id = existing_user.id, creator_id = creator_id).first()
+        existing_operator = session.query(Operator).filter_by(user_id = existing_user.id, creator_id = creator_db_id).first()
         if existing_operator:
             ops.append(existing_user.twitch_username)
 
@@ -101,7 +100,7 @@ def is_operator(username):
 
 
 def is_raffle():
-    raffle_state = session.query(Configurable).filter_by(creator_id = creator_id, alias='raffle_state').first()
+    raffle_state = session.query(Configurable).filter_by(creator_id = creator_db_id, alias='raffle_state').first()
     if raffle_state.value == 1:
         return True
     else:
@@ -110,28 +109,28 @@ def is_raffle():
 def add_operator(username):
     existing_user = session.query(User).filter_by(twitch_username = username).first()
     if existing_user:
-        new_operator = Operator(user_id = existing_user.id, creator_id = creator_id)
+        new_operator = Operator(user_id = existing_user.id, creator_id = creator_db_id)
         session.add(new_operator)
         session.commit()
     else:
         new_user = User(twitch_username = username)
         session.add(new_user)
         session.commit()
-        new_operator = Operator(user_id = new_user.id, creator_id = creator_id)
+        new_operator = Operator(user_id = new_user.id, creator_id = creator_db_id)
         session.add(new_operator)
         session.commit()
 
 def remove_operator(username):
     existing_user = session.query(User).filter_by(twitch_username = username).first()
     if existing_user:
-        existing_operator = session.query(Operator).filter_by(user_id = existing_user.id, creator_id = creator_id).first()
+        existing_operator = session.query(Operator).filter_by(user_id = existing_user.id, creator_id = creator_db_id).first()
         session.delete(existing_operator)
         session.commit()
     else:
         pass
         
 def get_command_output(keyword):
-    command = session.query(Command).filter_by(channel_id = creator_id, keyword = keyword).first()
+    command = session.query(Command).filter_by(channel_id = creator_db_id, keyword = keyword).first()
     outputs = session.query(Response).filter_by(command_id = command.id).all()
     responses = []
     for output in outputs:
@@ -140,19 +139,19 @@ def get_command_output(keyword):
     return response
 
 def get_raffle_keyword():
-    raffle_keyword = session.query(Temporary).filter_by(creator_id = creator_id, alias = 'raffle_keyword').first()
+    raffle_keyword = session.query(Temporary).filter_by(creator_id = creator_db_id, alias = 'raffle_keyword').first()
     return str(raffle_keyword.value)
 
 def add_raffle_participant(username):
-    existing_participant = session.query(Temporary).filter_by(alias='raffle_entry', value=username, note=get_raffle_keyword(channel_name), creator_id=creator_id).first()
+    existing_participant = session.query(Temporary).filter_by(alias='raffle_entry', value=username, note=get_raffle_keyword(channel_name), creator_id=creator_db_id).first()
     if not existing_participant:
-        new_participant = Temporary(alias='raffle_entry', value=username, note=get_raffle_keyword(channel_name), creator_id=creator_id)
+        new_participant = Temporary(alias='raffle_entry', value=username, note=get_raffle_keyword(channel_name), creator_id=creator_db_id)
         session.add(new_participant)
         session.commit()
 
 def raffle(state, keyword):
-    raffle_state = session.query(Configurable).filter_by(creator_id = creator_id, alias = 'raffle_state').first()
-    raffle_keyword = session.query(Temporary).filter_by(creator_id = creator_id, alias = 'raffle_keyword').first()
+    raffle_state = session.query(Configurable).filter_by(creator_id = creator_db_id, alias = 'raffle_state').first()
+    raffle_keyword = session.query(Temporary).filter_by(creator_id = creator_db_id, alias = 'raffle_keyword').first()
     if state == 1:
         raffle_state.value = 1
         raffle_keyword.value = keyword
@@ -163,7 +162,7 @@ def raffle(state, keyword):
         session.commit()
 
 def toggle_ops():
-    operator_state = session.query(Configurable).filter_by(creator_id = creator_id, alias='operator_state').first()
+    operator_state = session.query(Configurable).filter_by(creator_id = creator_db_id, alias='operator_state').first()
     if operator_state.value == 1:
         operator_state.value = 0
         session.commit()
@@ -174,7 +173,7 @@ def toggle_ops():
         return (f'Moderators and VIPs are now operators of Nurdbot.')
 
 def toggle_mute():
-    mute_state = session.query(Configurable).filter_by(creator_id = creator_id, alias='mute_state').first()
+    mute_state = session.query(Configurable).filter_by(creator_id = creator_db_id, alias='mute_state').first()
     if mute_state.value == 1:
         mute_state.value = 0
         session.commit()
@@ -185,11 +184,11 @@ def toggle_mute():
         return (f'MrDestructoid Nurdbot personality matrix disengaged MrDestructoid')
 
 def get_mute_state():
-    mute_state = session.query(Configurable).filter_by(creator_id = creator_id, alias='mute_state').first()
+    mute_state = session.query(Configurable).filter_by(creator_id = creator_db_id, alias='mute_state').first()
     return mute_state.value
 
 def is_harass(username):
-    existing_harass = session.query(TwitchHarass).filter_by(creator_id = creator_id, username=username).first()
+    existing_harass = session.query(TwitchHarass).filter_by(creator_id = creator_db_id, username=username).first()
     if existing_harass:
         return True
     else:
@@ -199,12 +198,12 @@ def add_harass(username):
     if is_harass(channel_name, username):
         print(f'{username} is already a harass target.')
     else:
-        new_harass = TwitchHarass(creator_id = creator_id, username=username)
+        new_harass = TwitchHarass(creator_id = creator_db_id, username=username)
         session.add(new_harass)
         session.commit()
 
 def remove_harass(username):
-    existing_harass = session.query(TwitchHarass).filter_by(creator_id = creator_id, username=username).first()
+    existing_harass = session.query(TwitchHarass).filter_by(creator_id = creator_db_id, username=username).first()
     if existing_harass:
         session.delete(existing_harass)
         session.commit()
@@ -222,20 +221,20 @@ def sponge_bob_case(message):
     return response
 
 def get_aggression_level():
-    aggression = session.query(Configurable).filter_by(creator_id = creator_id, alias = 'aggression').first()
+    aggression = session.query(Configurable).filter_by(creator_id = creator_db_id, alias = 'aggression').first()
     return aggression.value
 
 def set_aggression_level(value):
-    aggression = session.query(Configurable).filter_by(creator_id = creator_id, alias = 'aggression').first()
+    aggression = session.query(Configurable).filter_by(creator_id = creator_db_id, alias = 'aggression').first()
     aggression.value = value
     session.commit()
 
 def get_stupidity_level():
-    stupidity = session.query(Configurable).filter_by(creator_id = creator_id, alias = 'stupidity').first()
+    stupidity = session.query(Configurable).filter_by(creator_id = creator_db_id, alias = 'stupidity').first()
     return stupidity.value
 
 def set_stupidity_level(value):
-    stupidity = session.query(Configurable).filter_by(creator_id = creator_id, alias = 'stupidity').first()
+    stupidity = session.query(Configurable).filter_by(creator_id = creator_db_id, alias = 'stupidity').first()
     stupidity.value = value
     session.commit()
 
@@ -252,7 +251,7 @@ def confirm_user(twitch_username):
         print("Didn't find either, wtf.")
 
 def deduct_user_scrap(username, amount):
-    scrap = session.query(Scrap).filter_by(username = username, creator_id = creator_id).first()
+    scrap = session.query(Scrap).filter_by(username = username, creator_id = creator_db_id).first()
     if scrap:
         if scrap.amount > amount:
             scrap.amount = scrap.amount - amount
@@ -264,12 +263,12 @@ def deduct_user_scrap(username, amount):
         return False
 
 def add_user_scrap(username, amount):
-    scrap = session.query(Scrap).filter_by(username = username, creator_id = creator_id).first()
+    scrap = session.query(Scrap).filter_by(username = username, creator_id = creator_db_id).first()
     scrap.amount = scrap.amount + amount
     session.commit()
 
 def get_user_scrap(username):
-    scrap = session.query(Scrap).filter_by(username = username, creator_id = creator_id).first()
+    scrap = session.query(Scrap).filter_by(username = username, creator_id = creator_db_id).first()
     if scrap:
         return f'{username} currently has a balance of {scrap.amount} scrap.'
     else:
@@ -284,9 +283,9 @@ async def event_ready():
 @bot.event
 #THANKS CSWIL I LOVE YOU SO MUCH
 async def event_message(message):
-    log_message(str(message.author.name), str(message.content))
-    print(f'{Color.blue}<{message.channel.name}>{Color.yellow} {message.author.name} :{Color.white} {message.content}')
+    log_message(message.author.name, message.content)
     #parse for custom commands
+    print(f'{Color.blue}<{message.channel.name}>{Color.yellow} {message.author.name} :{Color.white} {message.content}')
     if str(message.content).startswith('!'):
         command_input = str(message.content.split(" ")[0])
         if command_input in get_commands_list():
@@ -463,7 +462,7 @@ async def draw_command(ctx):
             else:
                 amount = 1
             raffle_keyword = get_raffle_keyword()
-            people = session.query(Temporary).filter_by(alias='raffle_entry',note=raffle_keyword, creator_id=creator_id).all()
+            people = session.query(Temporary).filter_by(alias='raffle_entry',note=raffle_keyword, creator_id=creator_db_id).all()
             pool =[]
             for person in people:
                 pool.append(person.value)
