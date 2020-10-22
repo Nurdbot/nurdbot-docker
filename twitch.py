@@ -497,7 +497,7 @@ async def add_command_command(ctx):
         else:
             keyword = f'!{keyword_raw}'
         response = str(ctx.content.split(f'{keyword_raw} ')[1])
-        if get_command_id(channel_name, keyword) == False:
+        if get_command_id(keyword) == False:
             if keyword in static_commands:
                 await ctx.send(f'Sorry we already have that command, try using {keyword}')
             else:
