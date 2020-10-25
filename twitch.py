@@ -623,7 +623,10 @@ async def scrap_balance_command(ctx):
 async def todo_command(ctx):
     if ctx.channel.name == 'pronerd_jay' and ctx.author.name =='pronerd_jay':
         text_input = ctx.message.content.split('!todo ')[1]
-        kb.create_task(project_id = project_id, title=text_input, column_id =2)
+        url = f'http://prime-sub:8420/'
+        async with aio_session.post(url, json={'title': f'{text_input}'}):
+            print('uwu thanks nix')
+
         await ctx.send(f'{random.choice(generic_success_messages)}')
 
 @bot.command(name='done', aliases=['nailedit', 'completed', 'yeettask'])
@@ -631,15 +634,21 @@ async def done_command(ctx):
     if ctx.channel.name == 'pronerd_jay' and ctx.author.name == 'pronerd_jay':
         text_input = ctx.message.content.split(' ')[1]
         item_number = int(text_input)
-        kb.close_task(task_id = item_number)
+        url = f'http://prime-sub:8420/{item_number}'
+        async with aio_session.delete(url):
+            print('uwu deletely weety')
         await ctx.send(f"{random.choice(generic_success_messages)}")
 
 @bot.command(name='clear')
 async def clear_todo_command(ctx):
     if ctx.channel.name == 'pronerd_jay' and ctx.author.name == 'pronerd_jay':
-        all_tasks = kb.get_all_tasks(project_id = project_id, status_id = 0)
-        for task in all_tasks:
-            kb.remove_task(task_id = task['id'])
+        url = f'http://prime-sub:8420/'
+        async with aio_session.get(url) as all_tasks:
+            for task in all_tasks:
+                task_url = f"http://prime-sub:8420/{task['id']}"
+                async with aio_session.delete(task_url):
+                    print(f"uwu deleted {task['id']}")
+
         await ctx.send(f"{random.choice(generic_success_messages)}")
     else:
         await ctx.send(f"{random.choice(generic_fail_messages)} {ctx.author.name}")
