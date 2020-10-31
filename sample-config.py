@@ -8,8 +8,7 @@ modt = False
 DISCORD_TOKEN ='DISCORDTOKEN'
 #this isnt even implemented, wtf.
 mc_ip = 'MCIP'
-
-KANBOARD_API ='IMEANIFYOUREALLYWANTKANBOARD'
+TODO_URL= 'http://prime-sub:8420'
 DB_USER = 'DBUSER'
 DB_PASSWORD = 'DBPASSWORD'
 DB_NAME = 'DBNAME'

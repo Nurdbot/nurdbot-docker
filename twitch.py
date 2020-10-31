@@ -1,4 +1,4 @@
-import string, random, csv, os, json, time, traceback, threading, uuid, re, kanboard, wikipedia, aiohttp, requests, dice
+import string, random, csv, os, json, time, traceback, threading, uuid, re, wikipedia, aiohttp, requests, dice
 from xml.dom import minidom
 from os import path
 from datetime import datetime
@@ -8,12 +8,10 @@ from config import *
 from lists import *
 from models import *
 
-
-kb = kanboard.Client('http://localhost:8082/jsonrpc.php', 'jsonrpc', KANBOARD_API)
-project_id = 1
 aio_session = aiohttp.ClientSession()
 creator_db_id= int(os.environ.get('creator_id', '696969'))
 channel_name = os.environ.get('twitch_username', 'USERNAMEFAIL')
+
 #terminal color output.
 class Color:
     blue = '\u001b[34;1m'
@@ -30,7 +28,6 @@ bot = commands.Bot(
 )
 
 #start actual bot stuff.
-
 def log_message(username, message):
     now = datetime.now()
     stamp = now.strftime("%m/%d/%Y %H:%M:%S")
@@ -91,13 +88,11 @@ def is_operator(username):
         if existing_operator:
             ops.append(existing_user.twitch_username)
 
-
     if username in ops:
         return True
     else:
         print(str(ops))
         return False
-
 
 def is_raffle():
     raffle_state = session.query(Configurable).filter_by(creator_id = creator_db_id, alias='raffle_state').first()
@@ -217,7 +212,6 @@ def sponge_bob_case(message):
             response = response + message[idx].upper()
         else:
             response = response + message[idx].lower()
-
     return response
 
 def get_aggression_level():
@@ -279,8 +273,7 @@ def get_user_scrap(username):
 async def event_ready():
     print(f'<DESTROY ALL HUMANS> | {bot.nick}')
 
-#dynamic commands
-@bot.event
+
 #THANKS CSWIL I LOVE YOU SO MUCH
 async def event_message(message):
     log_message(message.author.name, message.content)
@@ -344,6 +337,7 @@ async def event_message(message):
                     await message.channel.send(random.choice(six_nines))
                 else:
                     await bot.handle_commands(message)
+
 #static commands
 @bot.command(name='addop', aliases=['deputize'])
 async def add_operator_command(ctx):
@@ -592,6 +586,7 @@ async def shoutout_command(ctx):
             await ctx.send(f'Be sure to check out {value[1]}! https://twitch.tv/{value[1]}')
     else:
         await ctx.send(f"{random.choice(generic_fail_messages)} {ctx.author.name}")
+
 #CREDITS:
 #THANKS nzeeshan @twitch
 @bot.command(name='roadtrip')
@@ -617,6 +612,24 @@ async def roadtrip_command(ctx):
 @bot.command(name='balance')
 async def scrap_balance_command(ctx):
     await ctx.send(get_user_scrap(ctx.author.name))
+
+#fixme...m8
+
+#//THIS WONT WORK UINTIL WE ONBOARD THIS COMMAND FOR EVERYONE. PLEASE DO NOT PUSH. !FUCK !TODO !HELP !MOM !SOMEONE STOP ME
+@bot.command(name='addquote')
+async def add_quote_command(ctx):
+    text_input = ctx.message.content.split('!addquote ')[1]
+    command_id = get_command_id('quote')
+    if not command_id:
+        insert_command('quote', text_input)
+    else:
+        insert_response(command_id, text_input) 
+
+    await ctx.send(f'{random.choice(generic_success_messages)}')
+
+@bot.command(name='quote', aliases=['qoute'])
+async def quote_command(ctx):
+    await ctx.send(get_command_output('quote'))
 
 #special jay only stuff
 @bot.command(name='todo')
