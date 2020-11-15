@@ -1,4 +1,4 @@
-FROM python:3.8-buster
+FROM python:3.9-buster
 
 ENV APP_HOME / app
 WORKDIR $APP_HOME
