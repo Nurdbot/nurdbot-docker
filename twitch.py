@@ -1,4 +1,4 @@
-import string, random, csv, os, json, time, traceback, threading, uuid, re, wikipedia, aiohttp, requests, dice
+import string, random, csv, os, json, time, traceback, threading, uuid, re, wikipedia, httpx, dice
 from xml.dom import minidom
 from os import path
 from datetime import datetime
@@ -8,7 +8,6 @@ from config import *
 from lists import *
 from models import *
 
-aio_session = aiohttp.ClientSession()
 creator_db_id= int(os.environ.get('creator_id', '696969'))
 channel_name = os.environ.get('twitch_username', 'USERNAMEFAIL')
 
@@ -90,7 +89,7 @@ def is_operator(username):
     
     if operator_state.value ==1:
         url = f'https://tmi.twitch.tv/group/user/{channel_name}/chatters'
-        response = requests.get(url)
+        response = httpx.get(url)
         data = response.json()
         ops.extend(data['chatters']['broadcaster'])
         ops.extend(data['chatters']['vips'])
@@ -136,7 +135,7 @@ def remove_operator(username):
         session.commit()
     else:
         pass
-        
+
 def get_command_output(keyword):
     command = session.query(Command).filter_by(channel_id = creator_db_id, keyword = keyword).first()
     outputs = session.query(Response).filter_by(command_id = command.id).all()
@@ -410,30 +409,26 @@ async def flip_a_coin_command(ctx):
 @bot.command(name='followage', aliases=['followtime'])
 async def followage_command(ctx):
     url = f'https://api.2g.be/twitch/followage/{ctx.channel.name}/{ctx.author.name}?format=mwdhms'
-    async with aio_session.get(url) as response:
-        data = await response.text()
+    data = httpx.get(url).text
     await ctx.send(str(data))
 
 @bot.command(name='uptime')
 async def uptime_command(ctx):
     url = f'https://beta.decapi.me/twitch/uptime/{ctx.channel.name}'
-    async with aio_session.get(url) as response:
-        data = await response.text()
+    data = httpx.get(url).text
     await ctx.send(f'Current uptime for {ctx.channel.name} is {data}')
 
 @bot.command(name='insult')
 async def insult_command(ctx):
     url ='https://insult.mattbas.org/api/insult'
-    async with aio_session.get(url) as response:
-        data = await response.text()
+    data = httpx.get(url).text
     await ctx.send(f'{data} {ctx.author.name}')
 
 @bot.command(name='compliment')
 async def compliment_command(ctx):
     url ='https://complimentr.com/api'
-    async with aio_session.get(url) as response:
-        data = await response.json()
-        output = str(data['compliment'])
+    data = httpx.get(url).json()
+    output = str(data['compliment'])
     await ctx.send(f'{output} {ctx.author.name}')
 
 @bot.command(name='hotness')
@@ -613,8 +608,8 @@ async def shoutout_command(ctx):
 @bot.command(name='roadtrip')
 async def roadtrip_command(ctx):
     if deduct_user_scrap(ctx.author.name, 1):
-        async with aio_session.get('https://api.3geonames.org/?randomland=yes') as response:
-            trip_data = minidom.parseString(await response.text())
+        url = f'https://api.3geonames.org/?randomland=yes'
+        trip_data = minidom.parseString(httpx.get(url).text)
         destination = trip_data.getElementsByTagName('wikipedia')
         if destination:
             location = str(destination[0].firstChild.nodeValue).split(':')[1]
@@ -658,8 +653,8 @@ async def todo_command(ctx):
     if ctx.channel.name == 'pronerd_jay' and ctx.author.name =='pronerd_jay':
         text_input = ctx.message.content.split('!todo ')[1]
         url = f'http://kappa:8420/'
-        async with aio_session.post(url, json={'title': f'{text_input}'}):
-            print('uwu thanks nix')
+        httpx.post(url, json={'title': f'{text_input}'})
+        print('uwu thanks nix')
 
         await ctx.send(f'{random.choice(generic_success_messages)}')
 
@@ -669,19 +664,20 @@ async def done_command(ctx):
         text_input = ctx.message.content.split(' ')[1]
         item_number = int(text_input)
         url = f'http://kappa:8420/{item_number}'
-        async with aio_session.delete(url):
-            print('uwu deletely weety')
+        httpx.delete(url)
+        print('uwu deletely weety')
+
         await ctx.send(f"{random.choice(generic_success_messages)}")
 
 @bot.command(name='clear')
 async def clear_todo_command(ctx):
     if ctx.channel.name == 'pronerd_jay' and ctx.author.name == 'pronerd_jay':
         url = f'http://kappa:8420/'
-        async with aio_session.get(url) as all_tasks:
-            for task in all_tasks:
-                task_url = f"http://kappa:8420/{task['id']}"
-                async with aio_session.delete(task_url):
-                    print(f"uwu deleted {task['id']}")
+        all_tasks = httpx.get(url)
+        for task in all_tasks:
+            task_url = f"http://kappa:8420/{task['id']}"
+            httpx.delete(task_url)
+            print(f"uwu deleted {task['id']}")
 
         await ctx.send(f"{random.choice(generic_success_messages)}")
     else:
