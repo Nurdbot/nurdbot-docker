@@ -68,6 +68,19 @@ def edit_command(keyword, new_response):
         response.output = new_response
         session.commit()
 
+def delete_command(keyword):
+    command = session.query(Command).filter_by(keyword = keyword, channel_id = creator_db_id).first()
+    if command:
+        responses = session.query(Response).filter_by(command_id = command.id).all()
+        print(f'called to delete {responses}')
+        for response in responses:
+            session.delete(response)
+            session.commit()
+    session.delete(command)
+    session.commit()
+    print(f'called to delete {command.keyword}')
+
+
 #exists checkers
 def is_operator(username):
     existing_user = session.query(User).filter_by(twitch_username = username).first()
@@ -485,7 +498,6 @@ async def roll_dice_command(ctx):
 @bot.command(name='addcommand')
 async def add_command_command(ctx):
     if is_operator(ctx.author.name):
-        channel_name = str(ctx.channel.name)
         keyword_raw = str(ctx.content.split(" ")[1])
         if keyword_raw[0] == '!':
             keyword = keyword_raw
@@ -506,7 +518,6 @@ async def add_command_command(ctx):
 @bot.command(name='editcommand')
 async def edit_command_command(ctx):
     if is_operator(ctx.author.name):
-        channel_name = str(ctx.channel.name)
         keyword = str(ctx.content.split(" ")[1])
         new_response = str(ctx.content.split(keyword)[1])
         if keyword in static_commands:
@@ -515,10 +526,19 @@ async def edit_command_command(ctx):
             edit_command(keyword, new_response)
             await ctx.send(f'Successfully changed {keyword} for {channel_name}\'s twitch chat.')
         
+@bot.command(name='rmcommand', aliases=['deletecommand','delcommand'])
+async def delete_command_command(ctx):
+    if is_operator(ctx.author.name):
+        keyword = str(ctx.content.split(" ")[1])
+        if keyword in static_commands:
+            await ctx.send(f'Sorry, we can\'t delete static commands.')
+        else:
+            delete_command(keyword)
+            await ctx.send(f'Successfully deleted the {keyword} command for {channel_name}\'s chat')
+
 @bot.command(name='addresponse')
 async def add_response_command(ctx):
     if is_operator(ctx.author.name):
-        channel_name = str(ctx.channel.name)
         keyword = str(ctx.content.split(" ")[1])
         response = str(ctx.content.split(f'{keyword} ')[1])
         if keyword in static_commands:
