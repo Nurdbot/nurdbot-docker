@@ -275,6 +275,7 @@ async def event_ready():
 
 
 #THANKS CSWIL I LOVE YOU SO MUCH
+@bot.event
 async def event_message(message):
     log_message(message.author.name, message.content)
     #parse for custom commands
@@ -619,24 +620,24 @@ async def scrap_balance_command(ctx):
 @bot.command(name='addquote')
 async def add_quote_command(ctx):
     text_input = ctx.message.content.split('!addquote ')[1]
-    command_id = get_command_id('quote')
+    command_id = get_command_id('!quote')
     if not command_id:
-        insert_command('quote', text_input)
+        insert_command('!quote', text_input)
     else:
-        insert_response(command_id, text_input) 
+        insert_response(command_id, text_input)
 
     await ctx.send(f'{random.choice(generic_success_messages)}')
 
 @bot.command(name='quote', aliases=['qoute'])
 async def quote_command(ctx):
-    await ctx.send(get_command_output('quote'))
+    await ctx.send(get_command_output('!quote'))
 
 #special jay only stuff
 @bot.command(name='todo')
 async def todo_command(ctx):
     if ctx.channel.name == 'pronerd_jay' and ctx.author.name =='pronerd_jay':
         text_input = ctx.message.content.split('!todo ')[1]
-        url = f'http://prime-sub:8420/'
+        url = f'http://kappa:8420/'
         async with aio_session.post(url, json={'title': f'{text_input}'}):
             print('uwu thanks nix')
 
@@ -647,7 +648,7 @@ async def done_command(ctx):
     if ctx.channel.name == 'pronerd_jay' and ctx.author.name == 'pronerd_jay':
         text_input = ctx.message.content.split(' ')[1]
         item_number = int(text_input)
-        url = f'http://prime-sub:8420/{item_number}'
+        url = f'http://kappa:8420/{item_number}'
         async with aio_session.delete(url):
             print('uwu deletely weety')
         await ctx.send(f"{random.choice(generic_success_messages)}")
@@ -655,10 +656,10 @@ async def done_command(ctx):
 @bot.command(name='clear')
 async def clear_todo_command(ctx):
     if ctx.channel.name == 'pronerd_jay' and ctx.author.name == 'pronerd_jay':
-        url = f'http://prime-sub:8420/'
+        url = f'http://kappa:8420/'
         async with aio_session.get(url) as all_tasks:
             for task in all_tasks:
-                task_url = f"http://prime-sub:8420/{task['id']}"
+                task_url = f"http://kappa:8420/{task['id']}"
                 async with aio_session.delete(task_url):
                     print(f"uwu deleted {task['id']}")
 
